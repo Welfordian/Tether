@@ -33,7 +33,6 @@ class App
             $requiredParameters = [];
             
             foreach ($reflection->getMethod('__construct')->getParameters() as $parameter) {
-                // check $this->config AND $this->mappings['aliases']
                 $key = null;
                 
                 if (array_key_exists($name, $this->config)) {
