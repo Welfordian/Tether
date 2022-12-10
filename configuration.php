@@ -5,7 +5,7 @@ return [
         'template_directory' => __DIR__ . '/templates',
         
         'cache' => [
-            'enabled' => false,
+            'enabled' => true,
             'directory' => __DIR__ . '/tether/cache'
         ]
     ]
