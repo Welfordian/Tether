@@ -56,7 +56,7 @@ class App
         }
     }
     
-    public function get($key)
+    public function get($key): mixed
     {
         if (! array_key_exists($key, $this->container)) return null;
         
