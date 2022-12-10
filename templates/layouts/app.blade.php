@@ -10,6 +10,6 @@
 <body class="h-screen w-screen">
     @yield('content')
 
-    <script type="text/javascript" src="https://cdn.tailwindcss.com/"></script>
+    <script type="text/javascript" src="https://cdn.tailwindcss.com/3.2.4"></script>
 </body>
 </html>
