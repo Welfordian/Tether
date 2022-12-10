@@ -9,14 +9,6 @@ return [
                 'password' => '',
                 'database' => 'tether',
                 'charset' => 'utf8mb4'
-            ],
-            
-            'api' => [
-                'host' => 'localhost',
-                'username' => 'root',
-                'password' => '',
-                'database' => 'portfolio-api',
-                'charset' => 'utf8mb4'
             ]
         ]
     ],
