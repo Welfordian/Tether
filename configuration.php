@@ -1,6 +1,6 @@
 <?php
 
-return [
+$config =  [
     'database' => [
         'connections' => [
             'default' => [
@@ -13,12 +13,14 @@ return [
         ]
     ],
     
-    'view' => [
-        'template_directory' => __DIR__ . '/templates',
+    'blade' => [
+        'viewPaths' => __DIR__ . '/templates',
+        'cachePath' => __DIR__ . '/tether/cache',
         
         'cache' => [
             'enabled' => false,
-            'directory' => __DIR__ . '/tether/cache'
         ]
     ]
 ];
+
+return $config;

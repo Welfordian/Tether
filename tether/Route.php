@@ -4,10 +4,14 @@ namespace Tether;
 
 class Route
 {
-    protected array $registeredRoutes = ['get' => [], 'post' => []];
+    private App $app;
     
-    public function __construct()
+    protected array $registeredRoutes = ['get' => [], 'post' => []];
+
+    public function __construct(App $app)
     {
+        $this->app = $app;
+        
         require_once __DIR__ . '/../routes/web.php';
     }
     
@@ -24,7 +28,8 @@ class Route
             
             if (is_array($this->registeredRoutes[$method][$request->path()])) {
                 if (count($this->registeredRoutes[$method][$request->path()]) === 2 && $this->hasControllerAndMethod(...$this->registeredRoutes[$method][$request->path()])) {
-                    $class = new ('App\\Controllers\\' . $this->registeredRoutes[$method][$request->path()][0]);
+                    $class = 'App\\Controllers\\' . $this->registeredRoutes[$method][$request->path()][0];
+                    $class = new $class($this->app);
                     
                     echo $class->{$this->registeredRoutes[$method][$request->path()][1]}();
                     
@@ -38,7 +43,7 @@ class Route
     
     public function notFound(): string
     {
-        return View::render('errors.404');
+        return $this->app->get('view')->make('errors.404');
     }
     
     public function hasControllerAndMethod($controller, $method): bool

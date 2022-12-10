@@ -8,12 +8,9 @@ class View
 {
     private Blade $blade;
 
-    public function __construct()
+    public function __construct(Blade $blade)
     {
-        $this->blade = new Blade(
-            Config::get('view.template_directory'),
-            Config::get('view.cache.directory')
-        );
+        $this->blade = $blade;
         
         $this->setDirectives();
     }
@@ -28,10 +25,5 @@ class View
     public function make($template = '', $data = []): string
     {
         return $this->blade->render($template, $data);
-    }
-    
-    public static function render($template = '', $data = []): string
-    {
-        return (new self())->make($template, $data);
     }
 }
