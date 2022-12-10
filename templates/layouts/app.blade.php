@@ -7,7 +7,9 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Tether</title>
 </head>
-<body>
+<body class="h-screen w-screen">
     @yield('content')
+
+    <script type="text/javascript" src="https://cdn.tailwindcss.com/"></script>
 </body>
 </html>

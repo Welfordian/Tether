@@ -1,11 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    @config('admin_username')
-    
-    <form method="POST">
-        <input type="text" name="username" />
-        
-        <button type="submit">Check Username</button>
-    </form>
+    <div class="flex justify-center h-screen items-center">
+        <h1 class="text-4xl">Welcome to Tether.</h1>
+    </div>
 @endsection    

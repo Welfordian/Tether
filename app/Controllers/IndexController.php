@@ -8,11 +8,4 @@ class IndexController extends Controller
     {
         return $this->view('index');
     }
-    
-    public function handle(): string
-    {
-        return $this->view('handle', [
-            'username' => $this->request->get('username')
-        ]);
-    }
 }
