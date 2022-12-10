@@ -4,6 +4,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $router = new \Tether\Route();
 
+\Tether\Database::mapConnections();
+
 $router->handle(
     new \Tether\Request()
 );

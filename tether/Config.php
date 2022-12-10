@@ -11,6 +11,26 @@ class Config
         $this->config = require __DIR__ . '/../configuration.php';
     }
     
+    public function getByDotNotation($key, $default = null)
+    {        
+        if (preg_match('~^[^.\s]+(?:\.[^.\s]+)+$~', $key)) {
+            $keys = explode('.', $key);
+            
+            if (! array_key_exists($keys[0], $this->config)) return $default;
+            
+            $value = $this->config[$keys[0]];
+            array_shift($keys);
+
+            foreach($keys as $key) {
+                if (! array_key_exists($key, $value)) return $default;
+                
+                $value = $value[$key];
+            }
+
+            return $value;
+        }
+    }
+    
     public static function get($key, $default = null)
     {
         $self = new self();
@@ -19,16 +39,8 @@ class Config
             return $self->config[$key];
         }
         
-        if (preg_match('~^[^.\s]+(?:\.[^.\s]+)+$~', $key)) {
-            $keys = explode('.', $key);
-            $value = \Tether\Config::get($keys[0]);
-            array_shift($keys);
-
-            foreach($keys as $key) {
-                $value = $value[$key];
-            }
-
-            return $value;
+        if ($self->getByDotNotation($key) !== null) {
+            return $self->getByDotNotation($key);
         }
 
         return $default;
