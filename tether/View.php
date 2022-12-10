@@ -21,16 +21,16 @@ class View
     public function setDirectives(): void
     {
         $this->blade->directive('config', function ($expression) {
-            return "<?php echo is_array(\Tether\Config::get('admin_emails')) ? json_encode(\Tether\Config::get('admin_emails')) : \Tether\Config::get('admin_emails'); ?>";
+            return "<?php echo is_array(\Tether\Config::get('admin_emails')) ? json_encode(\Tether\Config::get($expression)) : \Tether\Config::get($expression); ?>";
         });
     }
 
-    public function make($template = '', $data = [])
+    public function make($template = '', $data = []): string
     {
         return $this->blade->render($template, $data);
     }
     
-    public static function render($template = '', $data = [])
+    public static function render($template = '', $data = []): string
     {
         return (new self())->make($template, $data);
     }

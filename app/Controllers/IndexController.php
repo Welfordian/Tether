@@ -9,7 +9,7 @@ class IndexController extends Controller
         return $this->view('index');
     }
     
-    public function handle()
+    public function handle(): string
     {
         return $this->view('handle', [
             'username' => $this->request->get('username')
