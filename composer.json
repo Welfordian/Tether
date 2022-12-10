@@ -1,0 +1,14 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Tether\\": "tether/",
+      "App\\": "app/"
+    }
+  },
+  "require-dev": {
+    "symfony/var-dumper": "^6.2"
+  },
+  "require": {
+    "jenssegers/blade": "^1.4"
+  }
+}
