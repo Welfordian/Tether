@@ -1,6 +1,10 @@
 <?php
 
 $config =  [
+    'environment' => [
+        'debug' => true,
+    ],
+    
     'database' => [
         'connections' => [
             'default' => [
@@ -11,6 +15,12 @@ $config =  [
                 'charset' => 'utf8mb4'
             ]
         ]
+    ],
+    
+    'session' => [
+        'name' => 'tether',
+        'lifetime' => '86400',
+        'secure' => true,
     ],
     
     'blade' => [
