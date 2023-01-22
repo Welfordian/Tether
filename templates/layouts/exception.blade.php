@@ -14,7 +14,7 @@
             font-family: 'Inter', sans-serif;
         }
         
-        code *,pre * { font-family: "Lucida Console", monospace, sans-serif; }
+        code, pre, code *, pre * { font-family: "Lucida Console", monospace, sans-serif !important; }
         pre code.hljs { padding: 0 !important; overflow: visible !important; }
     </style>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css" />
