@@ -11,8 +11,6 @@ class DashboardController extends Controller
         if (! auth()->check()) {
             return redirect()->to('/');
         }
-        
-        throw new Test('you need to actually make it work, cunt');
 
         return $this->view('dashboard');
     }
