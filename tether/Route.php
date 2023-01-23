@@ -3,11 +3,14 @@
 namespace Tether;
 
 use App\Http\Kernel;
+use JetBrains\PhpStorm\NoReturn;
 
 class Route
 {
-    protected array $current = [];
     protected Kernel $kernel;
+    
+    protected array $current = [];
+    protected array $groups = [];
     protected array $registeredRoutes = ['get' => [], 'post' => []];
 
     public function __construct(private readonly App $app)
@@ -21,29 +24,33 @@ class Route
     {
         $method = strtolower($_SERVER['REQUEST_METHOD']);
         
-        if (array_key_exists($request->path(), $this->registeredRoutes[$method])) {
-            if (is_callable($this->registeredRoutes[$method][$request->path()])) {
-                $this->handleMiddleware();
+        if ($path = $this->isValidRoute($request, $method)) {
+            if (is_callable($this->registeredRoutes[$method][$path]['method'])) {
+                $this->handleMiddleware($method, $path);
                 
-                echo $this->registeredRoutes[$method][$request->path()]($request);
+                echo $this->registeredRoutes[$method][$path]['method']($request);
                 
                 return;
             }
             
-            if (is_array($this->registeredRoutes[$method][$request->path()])) {
-                if (count($this->registeredRoutes[$method][$request->path()]['method']) === 2 && $this->hasControllerAndMethod(...$this->registeredRoutes[$method][$request->path()]['method'])) {
-                    if (class_exists($this->registeredRoutes[$method][$request->path()]['method'][0])) {
-                        $class = $this->registeredRoutes[$method][$request->path()]['method'][0];
+            if (is_array($this->registeredRoutes[$method][$path])) {
+                if (count($this->registeredRoutes[$method][$path]['method']) === 2 && $this->hasControllerAndMethod(...$this->registeredRoutes[$method][$path]['method'])) {
+                    if (class_exists($this->registeredRoutes[$method][$path]['method'][0])) {
+                        $class = $this->registeredRoutes[$method][$path]['method'][0];
                     } else {
-                        $class = 'App\\Http\\Controllers\\' . $this->registeredRoutes[$method][$request->path()]['method'][0];
+                        $class = 'App\\Http\\Controllers\\' . $this->registeredRoutes[$method][$path]['method'][0];
                     }
                     
                     $this->handleGlobalMiddleware();
-                    $this->handleMiddleware($method, $request->path());
+                    $this->handleMiddleware($method, $path);
+                    
+                    if (array_key_exists('group', $this->registeredRoutes[$method][$path])) {
+                        $this->handleGroupMiddleware($method, $path, $this->registeredRoutes[$method][$path]['group']);
+                    }
                     
                     $class = new $class($this->app);
                     
-                    echo $class->{$this->registeredRoutes[$method][$request->path()]['method'][1]}($request);
+                    echo $class->{$this->registeredRoutes[$method][$path]['method'][1]}($request);
 
                     $this->handleGlobalMiddleware('after');
                     
@@ -55,16 +62,31 @@ class Route
         echo $this->notFound();
     }
     
-    public function handleMiddleware($method = 'get', $path = '', $middleware = [])
+    public function isValidRoute($request, $method)
+    {
+        $path = explode('/', $request->path());
+        
+        if (array_key_exists($path[1], $this->registeredRoutes[$method])) {
+            return $path[1];
+        }
+
+        if (array_key_exists('/' . $path[1], $this->registeredRoutes[$method])) {
+            return '/' . $path[1];
+        }
+        
+        return false;
+    }
+    
+    public function handleMiddleware($method = 'get', $path = '', $middleware = []): void
     {
         $route = $this->registeredRoutes[$method][$path];
         
-        if (! array_key_exists('middleware', $route)) return;
+        if (! array_key_exists('middleware', $route) && $middleware === []) return;
         
         if ($middleware === []) $middleware = $route['middleware'];
         
         foreach ($middleware as $middleware) {
-            if (is_array($middleware)) return $this->handleMiddleware($method, $path, $middleware);
+            if (is_array($middleware)) $this->handleMiddleware($method, $path, $middleware);
             
             if (array_key_exists($middleware, $this->kernel->getMiddleware())) {
                 $middleware = $this->kernel->getMiddleware()[$middleware];
@@ -76,6 +98,20 @@ class Route
                 }
             }
         }
+    }
+    
+    public function handleGroupMiddleware($method = 'get', $path = '', $group = null, $middleware = []): void
+    {
+        if (is_null($group)) return;
+
+        $group = $this->groups[$group];
+
+        if (! array_key_exists('middleware', $group)) return;
+
+        if ($middleware === []) $middleware = $group['middleware'];
+        if (! is_array($middleware)) $middleware = [$middleware];
+
+        $this->handleMiddleware($method, $path, $middleware);
     }
     
     public function handleGlobalMiddleware($type = 'before'): void
@@ -114,17 +150,6 @@ class Route
         return false;
     }
     
-    public function get($path, $method): static
-    {
-        $this->current = ['type' => 'get', 'path' => $path, 'method' => $method];
-        
-        $this->registeredRoutes['get'][$path] = [
-            'method' => $method
-        ];
-        
-        return $this;
-    }
-    
     public function middleware($middleware): static
     {
         if ($this->current === []) return $this;
@@ -136,6 +161,49 @@ class Route
         
         $current['middleware'][] = $middleware;
         
+        return $this;
+    }
+    
+    public function name($name): static
+    {
+        if ($this->current === []) return $this;
+
+        $current = &$this->registeredRoutes[$this->current['type']][$this->current['path']];
+        
+        $current['name'] = $name;
+        
+        return $this;
+    }
+    
+    public function getRouteByName($name): mixed
+    {
+        foreach ($this->registeredRoutes as $registeredRoutes)
+        {
+            foreach ($registeredRoutes as $key => $route)
+            {
+                if (array_key_exists('name', $route)) {
+                    if ($route['name'] === $name) return $key;
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    public function get($path, $method): static
+    {
+        $this->current = ['type' => 'get', 'path' => $path, 'method' => $method];
+        
+        $route = [
+            'method' => $method
+        ];
+        
+        if ($this->groups !== []) {
+            $route['group'] = count($this->groups) - 1;
+        }
+
+        $this->registeredRoutes['get'][$path] = $route;
+
         return $this;
     }
 
@@ -150,21 +218,19 @@ class Route
         return $this;
     }
     
-    public function abort($code = '404', $data = [])
+    public function group($group, $fn)
+    {
+        $this->groups[] = $group;
+        
+        $fn();
+    }
+    
+    #[NoReturn] public function abort($code = '404', $data = []): void
     {
         if (file_exists(basedir('templates/errors/' . $code . '.blade.php'))) {
             die($this->app->get('view')->make('errors.' . $code, $data));
         }
 
         die($this->app->get('view')->make('errors.404', $data));
-    }
-    
-    public static function __callStatic($method, $args)
-    {
-        $router = new self();
-        
-        if (method_exists($router, $method)) {
-            call_user_func_array(array($router, $method), $args);
-        }
     }
 }

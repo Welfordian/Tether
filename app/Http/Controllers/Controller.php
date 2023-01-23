@@ -15,7 +15,6 @@ class Controller
     public function __construct(App $app)
     {
         $this->app = $app;
-        $this->request = new Request();
         $this->config = new Config();
     }
 

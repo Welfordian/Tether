@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\StartSession;
 use App\Http\Middleware\UserIsAuthenticated;
 
@@ -18,6 +19,7 @@ class Kernel
     
     protected array $middleware = [
         'auth' => UserIsAuthenticated::class,
+        'redirectIfAuthenticated' => RedirectIfAuthenticated::class,
     ];
     
     public function getGlobalMiddleware(): array

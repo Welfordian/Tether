@@ -4,10 +4,7 @@ namespace Tether;
 
 class Session
 {
-    public function __construct()
-    {
-        
-    }
+    public function __construct() {}
     
     public function get($key)
     {

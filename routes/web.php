@@ -2,7 +2,10 @@
 
 use \Tether\Route;
 
-Route::get('/', [\App\Http\Controllers\IndexController::class, 'show']);
-Route::post('/login', [\App\Http\Controllers\LoginController::class, 'login']);
-Route::get('/logout', [\App\Http\Controllers\LoginController::class, 'logout']);
-Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'show'])->middleware(['auth']);
+Route::get('/', [\App\Http\Controllers\IndexController::class, 'show'])->name('index')->middleware('redirectIfAuthenticated');
+Route::post('login', [\App\Http\Controllers\LoginController::class, 'login'])->name('login');
+Route::post('logout', [\App\Http\Controllers\LoginController::class, 'logout'])->name('logout');
+
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'show'])->name('dashboard');
+});

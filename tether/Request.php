@@ -7,7 +7,7 @@ class Request
     protected array $data = [];
     protected mixed $path = '';
     
-    public function __construct()
+    public function __construct(protected App $app)
     {
         $this->data = $_GET + $_POST;
         $this->path = $_SERVER['REQUEST_URI'];
@@ -37,6 +37,11 @@ class Request
         header('Location: ' . $location);
         
         exit;
+    }
+    
+    public function route($name)
+    {
+        return $this->app->get('route')->getRouteByName($name);
     }
     
     public function __get($property)

@@ -9,8 +9,8 @@ return [
         'session' => \Tether\Session::class,
         'auth' => \Tether\Auth::class,
         'redirect' => \Tether\Redirect::class,
-        'request' => \Tether\Request::class,
         'route' => \Tether\Route::class,
+        'request' => \Tether\Request::class,
         'database' => \Tether\Database::class,
     ],
     
