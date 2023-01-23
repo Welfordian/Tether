@@ -7,17 +7,25 @@ use App\Http\Middleware\UserIsAuthenticated;
 
 class Kernel
 {
-    protected array $middleware = [
+    protected array $globalMiddleware = [
         'before' => [
             StartSession::class,
-            UserIsAuthenticated::class,
         ],
         'after' => [
             // 
         ],
     ];
     
-    public function middleware(): array
+    protected array $middleware = [
+        'auth' => UserIsAuthenticated::class,
+    ];
+    
+    public function getGlobalMiddleware(): array
+    {
+        return $this->globalMiddleware;
+    }
+    
+    public function getMiddleware(): array
     {
         return $this->middleware;
     }

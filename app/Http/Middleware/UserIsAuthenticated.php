@@ -4,11 +4,9 @@ namespace App\Http\Middleware;
 
 class UserIsAuthenticated
 {
-    public function handle()
+    public function handle(): mixed
     {
-        if (! auth()->check()) {
-            return true;
-            
+        if (! auth()->check()) {            
             return redirect()->to('/');
         }
         

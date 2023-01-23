@@ -106,6 +106,11 @@ class App
         }
     }
     
+    public function getMappings(): array
+    {
+        return $this->mappings;
+    }
+    
     public function registerShutdownFunction(): void
     {
         register_shutdown_function(function () {

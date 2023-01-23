@@ -6,14 +6,12 @@ use App\Http\Kernel;
 
 class Route
 {
-    private App $app;
-    
+    protected array $current = [];
     protected Kernel $kernel;
     protected array $registeredRoutes = ['get' => [], 'post' => []];
 
-    public function __construct(App $app)
+    public function __construct(private readonly App $app)
     {
-        $this->app = $app;
         $this->kernel = new Kernel();
         
         require_once __DIR__ . '/../routes/web.php';
@@ -29,26 +27,25 @@ class Route
                 
                 echo $this->registeredRoutes[$method][$request->path()]($request);
                 
-                $this->handleMiddleware('after');
-                
                 return;
             }
             
             if (is_array($this->registeredRoutes[$method][$request->path()])) {
-                if (count($this->registeredRoutes[$method][$request->path()]) === 2 && $this->hasControllerAndMethod(...$this->registeredRoutes[$method][$request->path()])) {
-                    $this->handleMiddleware();
-                    
-                    if (class_exists($this->registeredRoutes[$method][$request->path()][0])) {
-                        $class = $this->registeredRoutes[$method][$request->path()][0];
+                if (count($this->registeredRoutes[$method][$request->path()]['method']) === 2 && $this->hasControllerAndMethod(...$this->registeredRoutes[$method][$request->path()]['method'])) {
+                    if (class_exists($this->registeredRoutes[$method][$request->path()]['method'][0])) {
+                        $class = $this->registeredRoutes[$method][$request->path()]['method'][0];
                     } else {
-                        $class = 'App\\Http\\Controllers\\' . $this->registeredRoutes[$method][$request->path()][0];
+                        $class = 'App\\Http\\Controllers\\' . $this->registeredRoutes[$method][$request->path()]['method'][0];
                     }
+                    
+                    $this->handleGlobalMiddleware();
+                    $this->handleMiddleware($method, $request->path());
                     
                     $class = new $class($this->app);
                     
-                    echo $class->{$this->registeredRoutes[$method][$request->path()][1]}($request);
+                    echo $class->{$this->registeredRoutes[$method][$request->path()]['method'][1]}($request);
 
-                    $this->handleMiddleware('after');
+                    $this->handleGlobalMiddleware('after');
                     
                     return;
                 }
@@ -58,9 +55,32 @@ class Route
         echo $this->notFound();
     }
     
-    public function handleMiddleware($type = 'before')
+    public function handleMiddleware($method = 'get', $path = '', $middleware = [])
     {
-        foreach ($this->kernel->middleware()[$type] as $middleware)
+        $route = $this->registeredRoutes[$method][$path];
+        
+        if (! array_key_exists('middleware', $route)) return;
+        
+        if ($middleware === []) $middleware = $route['middleware'];
+        
+        foreach ($middleware as $middleware) {
+            if (is_array($middleware)) return $this->handleMiddleware($method, $path, $middleware);
+            
+            if (array_key_exists($middleware, $this->kernel->getMiddleware())) {
+                $middleware = $this->kernel->getMiddleware()[$middleware];
+
+                $middleware = new $middleware;
+
+                if ($middleware->handle($this->app) !== true) {
+                    die($middleware->handle($this->app));
+                }
+            }
+        }
+    }
+    
+    public function handleGlobalMiddleware($type = 'before'): void
+    {
+        foreach ($this->kernel->getGlobalMiddleware()[$type] as $middleware)
         {
             $middleware = new $middleware;
             
@@ -94,14 +114,40 @@ class Route
         return false;
     }
     
-    public function get($path, $method): void
+    public function get($path, $method): static
     {
-        $this->registeredRoutes['get'][$path] = $method;
+        $this->current = ['type' => 'get', 'path' => $path, 'method' => $method];
+        
+        $this->registeredRoutes['get'][$path] = [
+            'method' => $method
+        ];
+        
+        return $this;
+    }
+    
+    public function middleware($middleware): static
+    {
+        if ($this->current === []) return $this;
+        
+        $current = &$this->registeredRoutes[$this->current['type']][$this->current['path']];
+
+        if (! isset($current['middleware']) && is_array($middleware)) $current['middleware'] = $middleware;
+        if (! isset($current['middleware']) || ! is_array($current['middleware'])) $current['middleware'] = [];
+        
+        $current['middleware'][] = $middleware;
+        
+        return $this;
     }
 
-    public function post($path, $method): void
+    public function post($path, $method): static
     {
-        $this->registeredRoutes['post'][$path] = $method;
+        $this->current = ['type' => 'post', 'path' => $path, 'method' => $method];
+
+        $this->registeredRoutes['post'][$path] = [
+            'method' => $method
+        ];
+
+        return $this;
     }
     
     public function abort($code = '404', $data = [])

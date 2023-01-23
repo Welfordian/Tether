@@ -15,6 +15,6 @@ return [
     ],
     
     'aliases' => [
-        \Jenssegers\Blade\Blade::class => 'blade'
+        \Jenssegers\Blade\Blade::class => 'blade',
     ]
 ];
