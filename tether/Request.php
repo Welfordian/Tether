@@ -4,6 +4,7 @@ namespace Tether;
 
 class Request
 {
+    protected array $headers = [];
     protected array $data = [];
     protected mixed $path = '';
     
@@ -11,6 +12,7 @@ class Request
     {
         $this->data = $_GET + $_POST;
         $this->path = $_SERVER['REQUEST_URI'];
+        $this->headers = getallheaders();
     }
     
     public function all(): array
@@ -30,6 +32,20 @@ class Request
         }
         
         return $default;
+    }
+    
+    public function header($key = null, $default = null)
+    {
+        if (is_null($key)) return $default;
+        
+        if (! array_key_exists($key, $this->headers())) return $default;
+        
+        return $this->headers[$key];
+    }
+    
+    public function headers()
+    {
+        return $this->headers;
     }
     
     public function redirect($location = '/'): void

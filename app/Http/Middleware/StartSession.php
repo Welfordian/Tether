@@ -6,14 +6,12 @@ use Tether\App;
 
 class StartSession
 {
-    public function handle(App $app)
-    {
-        $session = $app->get('config')->session;
-        
+    public function handle()
+    {        
         session_start([
-            'name' => ($session['name'] ?? 'tether') . '_session',
-            'cookie_lifetime' => $session['lifetime'] ?? '86400',
-            'cookie_httponly' => $session['secure'] ?? false,
+            'name' => (config()->session['name'] ?? 'tether') . '_session',
+            'cookie_lifetime' => config()->session['lifetime'] ?? '86400',
+            'cookie_httponly' => config()->session['secure'] ?? false,
             'sid_length' => 128,
         ]);
         

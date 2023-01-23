@@ -29,6 +29,8 @@ class Route
                 $this->handleMiddleware($method, $path);
                 
                 echo $this->registeredRoutes[$method][$path]['method']($request);
+
+                $this->app->get('csrf')->regenerate();
                 
                 return;
             }
@@ -53,6 +55,8 @@ class Route
                     echo $class->{$this->registeredRoutes[$method][$path]['method'][1]}($request);
 
                     $this->handleGlobalMiddleware('after');
+
+                    $this->app->get('csrf')->regenerate();
                     
                     return;
                 }
@@ -77,24 +81,30 @@ class Route
         return false;
     }
     
-    public function handleMiddleware($method = 'get', $path = '', $middleware = []): void
+    public function handleMiddleware($method = 'get', $path = '', $middlewares = []): void
     {
         $route = $this->registeredRoutes[$method][$path];
         
-        if (! array_key_exists('middleware', $route) && $middleware === []) return;
+        if (! array_key_exists('middleware', $route) && $middlewares === []) return;
         
-        if ($middleware === []) $middleware = $route['middleware'];
+        if ($middlewares === []) $middlewares = $route['middleware'];
         
-        foreach ($middleware as $middleware) {
-            if (is_array($middleware)) $this->handleMiddleware($method, $path, $middleware);
+        foreach ($middlewares as $middleware) {
+            if (is_array($middleware)) {
+                $this->handleMiddleware($method, $path, $middleware);
+                
+                continue;
+            }
             
             if (array_key_exists($middleware, $this->kernel->getMiddleware())) {
                 $middleware = $this->kernel->getMiddleware()[$middleware];
 
-                $middleware = new $middleware;
+                $middleware = new $middleware(...$this->app->withParameters($middleware));
 
-                if ($middleware->handle($this->app) !== true) {
-                    die($middleware->handle($this->app));
+                if ($middleware->handle($this->app->get('request')) !== true) {
+                    $this->app->get('csrf')->regenerate();
+                    
+                    die($middleware->handle($this->app->get('request')));
                 }
             }
         }
@@ -120,8 +130,10 @@ class Route
         {
             $middleware = new $middleware;
             
-            if ($middleware->handle($this->app) !== true) {
-                die($middleware->handle($this->app));
+            if ($middleware->handle($this->app->get('request')) !== true) {
+                $this->app->get('csrf')->regenerate();
+                
+                die($middleware->handle($this->app->get('request')));
             }
         }
     }
@@ -175,7 +187,7 @@ class Route
         return $this;
     }
     
-    public function getRouteByName($name): mixed
+    public function getRouteByName($name): string|int|null
     {
         foreach ($this->registeredRoutes as $registeredRoutes)
         {

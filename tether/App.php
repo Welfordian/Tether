@@ -58,52 +58,61 @@ class App
     
     public function registerMappings(): void
     {
-        foreach ($this->mappings['classes'] as $name => $class) {
-            $classes = $this->container;
-            
-            foreach ($classes as $key => $value) {
-                if (is_string($value)) return;
-
-                $classes[$value::class] = $value;
-                unset($classes[$key]);
-            }
-            
-            $reflection = new \ReflectionClass($class);
-
-            $requiredParameters = [];
-            
-            foreach ($reflection->getMethod('__construct')->getParameters() as $parameter) {
-                $key = null;
-                
-                if (array_key_exists($name, $this->config)) {
-                    if (array_key_exists($parameter->getName(), $this->config[$name])) {
-                        $key = $this->config[$name][$parameter->getName()];
-                    }
-                }
-                
-                if (array_key_exists($parameter->getType()?->getName(), $this->mappings['aliases'])) {
-                    $key = $this->container[$this->mappings['aliases'][$parameter->getType()?->getName()]];
-                }
-
-                if (in_array($parameter->getType()?->getName(), array_values($classes))) {
-                    $key = $this->container[$parameter->getType()?->getName()];
-                }
-
-                if (array_key_exists($parameter->getType()?->getName(), $classes)) {
-                    $key = $classes[$parameter->getType()?->getName()];
-                }
-                
-                if ($parameter->getType()?->getName() === 'Tether\\App') {
-                    $requiredParameters[] = $this;
-                } else {
-                    $requiredParameters[] = $key;
-                }                
-            }
+        foreach ($this->mappings['classes'] as $name => $class) {            
+            $requiredParameters = $this->withParameters($class, $name);
             
             $this->container[$name] = new $class(...$requiredParameters);
             
             $this->triggerHandlers($class, $this->container[$name]);
         }
+    }
+    
+    public function withParameters($class, $name = null)
+    {
+        $classes = $this->container;
+
+        foreach ($classes as $key => $value) {
+            if (is_string($value)) return;
+
+            $classes[$value::class] = $value;
+            unset($classes[$key]);
+        }
+        
+        $reflection = new \ReflectionClass($class);
+
+        $requiredParameters = [];
+
+        if (! $reflection->hasMethod('__construct')) return $requiredParameters;
+        
+        foreach ($reflection->getMethod('__construct')->getParameters() as $parameter) {
+            $key = null;
+
+            if (array_key_exists($name, $this->config)) {
+                if (array_key_exists($parameter->getName(), $this->config[$name])) {
+                    $key = $this->config[$name][$parameter->getName()];
+                }
+            }
+
+            if (array_key_exists($parameter->getType()?->getName(), $this->mappings['aliases'])) {
+                $key = $this->container[$this->mappings['aliases'][$parameter->getType()?->getName()]];
+            }
+
+            if (in_array($parameter->getType()?->getName(), array_values($classes))) {
+                $key = $this->container[$parameter->getType()?->getName()];
+            }
+
+            if (array_key_exists($parameter->getType()?->getName(), $classes)) {
+                $key = $classes[$parameter->getType()?->getName()];
+            }
+
+            if ($parameter->getType()?->getName() === 'Tether\\App') {
+                $requiredParameters[] = $this;
+            } else {
+                $requiredParameters[] = $key;
+            }
+        }
+        
+        return $requiredParameters;
     }
     
     public function getMappings(): array
@@ -125,18 +134,24 @@ class App
         return $this->container[$key];
     }
     
-    public function run(): void
+    public function run($argv = []): void
     {
         \Tether\Database::mapDatabaseConnections();
+        
+        if (php_sapi_name() === 'cli') {
+            $this->container['cli']->handle(
+                $argv
+            );
+        } else {
+            $this->container['route']->handle(
+                $this->container['request']
+            );
 
-        $this->container['route']->handle(
-            $this->container['request']
-        );
+            if (! \Tether\Config::get('blade.cache.enabled', true)) {
+                $config_dir = \Tether\Config::get('blade.cachePath');
 
-        if (! \Tether\Config::get('blade.cache.enabled', true)) {
-            $config_dir = \Tether\Config::get('blade.cachePath');
-
-            system('rm -rf -- ' . escapeshellarg($config_dir));
+                system('rm -rf -- ' . escapeshellarg($config_dir));
+            }
         }
     }
 }

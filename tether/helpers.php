@@ -66,4 +66,24 @@ return function ($app) {
             return $app->getConfig();
         }
     }
+    
+    if (! function_exists('csrf_token'))
+    {
+        function csrf_token()
+        {
+            global $app;
+            
+            return $app->get('csrf')->get();
+        }
+    }
+    
+    if (! function_exists('route'))
+    {
+        function route($name)
+        {
+            global $app;
+            
+            return '/' . $app->get('route')->getRouteByName($name);
+        }
+    }
 };

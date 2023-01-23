@@ -17,7 +17,7 @@
 
             <div class="flex mt-8 grow h-screen">
                 <div class="w-1/4 h-screen bg-gray-800 flex flex-col text-white border-r-2 border-gray-700">
-                    <div class="gap-1 h-screen max-h-screen">
+                    <div class="gap-1 h-screen max-h-screen overflow-y-auto">
                         <div
                                 class="w-full px-4 py-4 text-sm bg-gray-800 cursor-pointer hover:bg-gray-700 break-words max-w-full transition"
                                 :class="{'bg-gray-700': pane === key}"
