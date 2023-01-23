@@ -2,16 +2,16 @@
 
 @section('content')
     <div class="flex justify-center bg-gray-900 text-white" id="app">
-        <div class="flex flex-col w-3/4 my-7">
-            <div class="w-full py-7 px-8 bg-gray-800 justify-between flex">
-                <div class="flex flex-col gap-6 items-start font-bold">
+        <div class="flex flex-col w-3/4 mt-7">
+            <div class="w-full py-7 px-8 bg-gray-800 justify-between flex flex-col gap-5">
+                <div class="flex gap-6 items-start justify-between font-bold w-full break-words">
                     <span class="py-3 px-6 bg-gray-900">{{ $exception::class }}</span>
 
-                    <p class="text-2xl">{{ $exception->getMessage() }}</p>
+                    <span class="py-3 px-6 bg-gray-700">PHP {{ phpversion() }}</span>
                 </div>
                 
-                <div class="flex flex-col gap-6 items-start font-bold"> 
-                    <span class="py-3 px-6 bg-gray-700">PHP {{ phpversion() }}</span>
+                <div class="flex flex-col gap-6 items-start font-bold">
+                    <p class="text-2xl break-words w-full">{{ $exception->getMessage() }}</p>
                 </div>
             </div>
 
