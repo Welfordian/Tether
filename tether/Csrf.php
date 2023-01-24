@@ -2,6 +2,8 @@
 
 namespace Tether;
 
+use Carbon\Carbon;
+
 class Csrf
 {    
     protected string $csrf_token;
@@ -9,10 +11,22 @@ class Csrf
     public function regenerate(): void
     {
         if (session('csrf_token') === null) {
-            $this->csrf_token = bin2hex(random_bytes(32));
-
-            session('csrf_token', $this->csrf_token);
+            $this->generateCsrfToken();
+        } else {
+            $expiry = new Carbon(session('csrf_expiry'));
+            
+            if (Carbon::now()->gt($expiry)) {
+                $this->generateCsrfToken();
+            }
         }
+    }
+    
+    public function generateCsrfToken()
+    {
+        $this->csrf_token = bin2hex(random_bytes(32));
+
+        session('csrf_token', $this->csrf_token);
+        session('csrf_expiry', Carbon::now()->addMinutes(30));
     }
     
     public function get(): string|null
